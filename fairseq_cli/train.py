@@ -316,12 +316,19 @@ def train(
         if cfg.model.finetune:
             lang_pair_length = len(cfg.task.lang_pairs)
 
-            for j in range(lang_pair_length):
-                if j == (i % lang_pair_length):
-                    continue
-                else:
-                    for k in range(len(samples)):
-                        samples[k].pop(cfg.task.lang_pairs[j])
+            if samples[0] is None:
+                for i, sample in enumerate(samples):  # delayed update loop
+                    samples[i], is_dummy_batch = trainer._prepare_sample(sample)
+                print("samples is None")
+
+            if samples[0] is not None:
+                for j in range(lang_pair_length):
+                    if j == (i % lang_pair_length):
+                        continue
+                    else:
+                        for k in range(len(samples)):
+                            samples[k].pop(cfg.task.lang_pairs[j])
+
             # if i % 2 == 0:
             #     for j in range(len(samples)):
             #         samples[j].pop('fa-en')
@@ -332,7 +339,6 @@ def train(
         with metrics.aggregate("train_inner"), torch.autograd.profiler.record_function(
             "train_step-%d" % i
         ):
-
             log_output = trainer.train_step(samples)
 
         if log_output is not None:  # not OOM, overflow, ...

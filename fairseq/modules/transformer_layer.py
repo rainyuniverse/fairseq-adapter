@@ -92,6 +92,11 @@ class TransformerEncoderLayerBase(nn.Module):
             for i in range(len(self.src_lang_list))
         })
 
+        # freeze adapters' parameters if train
+        if not self.finetune:
+            for param in self.adapters.parameters():
+                param.requires_grad = False
+
     def build_fc1(self, input_dim, output_dim, q_noise, qn_block_size):
         return quant_noise(
             nn.Linear(input_dim, output_dim), p=q_noise, block_size=qn_block_size
@@ -396,6 +401,11 @@ class TransformerDecoderLayerBase(nn.Module):
             self.tgt_lang_list[i] : AdapterLayer(self.embed_dim, self.adapter_latent_size)
             for i in range(len(self.tgt_lang_list))
         })
+
+        # freeze adapters' parameters if train
+        if not self.finetune:
+            for param in self.adapters.parameters():
+                param.requires_grad = False
 
     def build_fc1(self, input_dim, output_dim, q_noise, qn_block_size):
         return quant_noise(nn.Linear(input_dim, output_dim), q_noise, qn_block_size)
